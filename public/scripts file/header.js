@@ -344,7 +344,7 @@ onAuthStateChanged(auth, async (user) => {
   
   try {
     const snap = await getDoc(doc(db, "users", user.uid));
-    if (snap.exists() && snap.data().role === "admin") {
+    if (snap.exists() && snap.data().role === "admin\n") {
       adminLink.classList.remove("hidden"); ///////////////////////////////////////
     } else {
       adminLink.classList.add("hidden");

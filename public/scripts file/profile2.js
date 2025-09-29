@@ -8,12 +8,31 @@ import {
   validateName, validateUsername
 } from "./signup.js";
 
-
+// ====================== User Data ======================
 // ====================== User Data ======================
 let userData = JSON.parse(localStorage.getItem("user")) || {};
 if (!userData.id && auth?.currentUser) {
   userData.id = auth.currentUser.uid;
+} 
+
+// upload photo to cloudinary
+async function uploadToCloudinary(file) {
+  const cloudName = "dwx6an6yh";
+  const uploadPreset = "unsigned_preset";
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", uploadPreset);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+  return data.secure_url;
 }
+
 function readData() {
   const editName = document.getElementById("editName");
   const editUsername = document.getElementById("editUsername");
@@ -35,12 +54,13 @@ function readData() {
   if (editAddress) editAddress.value = userData.Address || "";
   if (editZip) editZip.value = userData.Zip || "";
 
-
   const profileName = document.getElementById("profileName");
   const profileEmail = document.getElementById("profileEmail");
+  const profileImage = document.getElementById("profileImage");
 
   if (profileName) profileName.textContent = userData.Name || "No name";
   if (profileEmail) profileEmail.textContent = userData.Email || "No email";
+  if (profileImage) profileImage.src = userData.Photo || "default.png";
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -87,6 +107,7 @@ async function updateProfile(e) {
   const editEmail = document.getElementById("editEmail");
   const editAddress = document.getElementById("editAddress");
   const editZip = document.getElementById("editZip");
+  const uploadPhoto = document.getElementById("uploadPhoto");
 
   let valid = [
     validateName(editName),
@@ -111,6 +132,12 @@ async function updateProfile(e) {
   const userRef = doc(db, "users", userData.id);
 
   try {
+    // لو رفع صورة جديدة
+    if (uploadPhoto && uploadPhoto.files[0]) {
+      const photoURL = await uploadToCloudinary(uploadPhoto.files[0]);
+      userData.Photo = photoURL;
+    }
+
     const updateData = {
       Name: editName.value,
       Username: editUsername.value,
@@ -212,6 +239,7 @@ window.addEventListener("DOMContentLoaded", () => {
     editForm.addEventListener("submit", updateProfile);
   }
 });
+
 
 // ====================== Render Favorites ======================
 async function renderFavorites() {
